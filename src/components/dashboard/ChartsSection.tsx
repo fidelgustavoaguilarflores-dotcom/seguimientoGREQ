@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Row } from '../../types';
 import {
     Chart as ChartJS,
@@ -14,7 +14,14 @@ import {
     Filler
 } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
-import { format, startOfMonth } from 'date-fns';
+import {
+    format,
+    startOfMonth,
+    startOfYear,
+    startOfWeek,
+    startOfDay,
+    parseISO,
+} from 'date-fns';
 import { es } from 'date-fns/locale';
 
 ChartJS.register(
@@ -34,7 +41,12 @@ interface ChartsSectionProps {
     data: Row[];
 }
 
+type Granularity = 'year' | 'month' | 'week' | 'day';
+
 export const ChartsSection: React.FC<ChartsSectionProps> = ({ data }) => {
+
+    const [granularity, setGranularity] = useState<Granularity>('month');
+    const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
     const chartOptions = {
         responsive: true,
@@ -58,48 +70,90 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({ data }) => {
         }
     };
 
-    // 1. Time Series by Observation (Group by Month of Fecha Publicacion)
+    // 1. Time Series by Observation with Filters
     const timeSeriesData = useMemo(() => {
         const grouped: Record<string, Record<string, number>> = {};
-        const months = new Set<string>();
+        const timeKeys = new Set<string>();
+        const obsTypes = new Set<string>();
 
         data.forEach(r => {
-            if (!r.fechaPublicacion) return;
-            const m = format(startOfMonth(r.fechaPublicacion), 'yyyy-MM', { locale: es });
-            months.add(m);
-            if (!grouped[m]) grouped[m] = {};
-            grouped[m][r.observacion] = (grouped[m][r.observacion] || 0) + 1;
+            // Filter by Fecha GREQ Range if set
+            if (dateRange.start && dateRange.end) {
+                if (!r.fechaGreq) return;
+                if (r.fechaGreq < dateRange.start || r.fechaGreq > dateRange.end) return;
+            }
+
+            // Fallback to fechaGreq if fechaPublicacion is missing to ensure we show all states (like AJUSTE)
+            const rawDate = r.fechaGreq || r.fechaPublicacion;
+            if (!rawDate) return;
+
+            let key = '';
+
+            // Handle both string (ISO) and Date objects
+            let date: Date;
+            if (typeof rawDate === 'string') {
+                date = parseISO(rawDate);
+            } else if (rawDate instanceof Date) {
+                date = rawDate;
+            } else {
+                return; // Unknown type
+            }
+
+            // Validate date
+            if (isNaN(date.getTime())) return;
+
+            switch (granularity) {
+                case 'year':
+                    key = format(startOfYear(date), 'yyyy', { locale: es });
+                    break;
+                case 'month':
+                    key = format(startOfMonth(date), 'yyyy-MM', { locale: es });
+                    break;
+                case 'week':
+                    key = format(startOfWeek(date), 'yyyy-\'W\'ww', { locale: es });
+                    break;
+                case 'day':
+                    key = format(startOfDay(date), 'yyyy-MM-dd', { locale: es });
+                    break;
+            }
+
+            timeKeys.add(key);
+            if (r.observacion) {
+                obsTypes.add(r.observacion);
+                if (!grouped[key]) grouped[key] = {};
+                grouped[key][r.observacion] = (grouped[key][r.observacion] || 0) + 1;
+            }
         });
 
-        const sortedMonths = Array.from(months).sort();
+        const sortedKeys = Array.from(timeKeys).sort();
+        const uniqueObs = Array.from(obsTypes).sort();
+
+        // LOGGING FOR DEBUGGING
+        console.log("Unique Observations Found for Time Series:", uniqueObs);
+        console.log("Total Data Rows (Filtered):", data.length);
+
+        // Color palette for dynamic lines
+        const colors = [
+            '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#ef4444', '#64748b', '#06b6d4'
+        ];
+
+        const datasets = uniqueObs.map((obs, index) => {
+            const color = colors[index % colors.length];
+            return {
+                label: obs,
+                data: sortedKeys.map(k => grouped[k]?.[obs] || 0),
+                borderColor: color,
+                backgroundColor: color + '33',
+                fill: false,
+                tension: 0.3
+            };
+        });
 
         return {
-            labels: sortedMonths,
-            datasets: [
-                {
-                    label: 'ORIGINAL',
-                    data: sortedMonths.map(m => grouped[m]?.['ORIGINAL'] || 0),
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-                    fill: true,
-                },
-                {
-                    label: 'AJUSTE',
-                    data: sortedMonths.map(m => grouped[m]?.['AJUSTE'] || 0),
-                    borderColor: '#f59e0b',
-                    backgroundColor: 'rgba(245, 158, 11, 0.2)',
-                    fill: true,
-                },
-                {
-                    label: 'SUMA-VUCE',
-                    data: sortedMonths.map(m => grouped[m]?.['SUMA-VUCE'] || 0),
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                    fill: true,
-                }
-            ]
+            labels: sortedKeys,
+            datasets: datasets
         };
-    }, [data]);
+    }, [data, granularity, dateRange]);
 
     // 2. Entity Bar Chart
     const entityData = useMemo(() => {
@@ -138,7 +192,25 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({ data }) => {
         };
     }, [data]);
 
-    // 4. Dev Horizontal Bar
+    // 4. Analysis Horizontal Bar
+    const analysisData = useMemo(() => {
+        const counts: Record<string, number> = {};
+        data.forEach(r => {
+            if (r.responsableAnalisis) counts[r.responsableAnalisis] = (counts[r.responsableAnalisis] || 0) + 1;
+        });
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+        return {
+            labels: sorted.map(s => s[0]),
+            datasets: [{
+                label: 'Asignaciones',
+                data: sorted.map(s => s[1]),
+                backgroundColor: '#f59e0b',
+            }]
+        };
+    }, [data]);
+
+    // 5. Dev Horizontal Bar
     const devData = useMemo(() => {
         const counts: Record<string, number> = {};
         data.forEach(r => {
@@ -153,7 +225,25 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({ data }) => {
             datasets: [{
                 label: 'Asignaciones',
                 data: sorted.map(s => s[1]),
-                backgroundColor: '#06b6d4',
+                backgroundColor: '#3b82f6',
+            }]
+        };
+    }, [data]);
+
+    // 6. CC Horizontal Bar
+    const ccData = useMemo(() => {
+        const counts: Record<string, number> = {};
+        data.forEach(r => {
+            if (r.responsableCC) counts[r.responsableCC] = (counts[r.responsableCC] || 0) + 1;
+        });
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+        return {
+            labels: sorted.map(s => s[0]),
+            datasets: [{
+                label: 'Asignaciones',
+                data: sorted.map(s => s[1]),
+                backgroundColor: '#10b981',
             }]
         };
     }, [data]);
@@ -162,9 +252,58 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({ data }) => {
         <div className="grid-dashboard" style={{ marginTop: '20px' }}>
 
             {/* Time Series */}
-            <div className="card" style={{ gridColumn: 'span 12', height: '300px' }}>
-                <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1em' }}>Evolución Temporal</h3>
-                <Line data={timeSeriesData} options={chartOptions} />
+            <div className="card" style={{ gridColumn: 'span 12', height: '400px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.1em' }}>Evolución Temporal</h3>
+
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {/* Granularity Controls */}
+                        <div style={{ display: 'flex', background: 'var(--bg-body)', borderRadius: '6px', padding: '2px' }}>
+                            {(['year', 'month', 'week', 'day'] as Granularity[]).map(g => (
+                                <button
+                                    key={g}
+                                    onClick={() => setGranularity(g)}
+                                    style={{
+                                        background: granularity === g ? 'var(--primary)' : 'transparent',
+                                        color: granularity === g ? 'white' : 'var(--text-secondary)',
+                                        border: 'none',
+                                        padding: '4px 12px',
+                                        borderRadius: '4px',
+                                        fontSize: '0.85em',
+                                        cursor: 'pointer',
+                                        textTransform: 'capitalize'
+                                    }}
+                                >
+                                    {g === 'year' ? 'Añ' : g === 'month' ? 'Mes' : g === 'week' ? 'Sem' : 'Día'}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Date Range Controls */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)' }}>F. GREQ:</span>
+                            <input
+                                type="date"
+                                className="form-input"
+                                style={{ width: '130px', padding: '4px 8px', fontSize: '0.85em', height: '28px' }}
+                                value={dateRange.start}
+                                onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                            />
+                            <span style={{ color: 'var(--text-muted)' }}>-</span>
+                            <input
+                                type="date"
+                                className="form-input"
+                                style={{ width: '130px', padding: '4px 8px', fontSize: '0.85em', height: '28px' }}
+                                value={dateRange.end}
+                                onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ height: '320px' }}>
+                    <Line data={timeSeriesData} options={chartOptions} />
+                </div>
             </div>
 
             {/* Entity Bar */}
@@ -174,18 +313,42 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({ data }) => {
             </div>
 
             {/* Observation Donut */}
-            <div className="card" style={{ gridColumn: 'span 3', height: '300px' }}>
+            <div className="card" style={{ gridColumn: 'span 6', height: '300px' }}>
                 <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1em' }}>Distribución Estado</h3>
                 <div style={{ position: 'relative', height: '85%' }}>
                     <Doughnut data={obsData} options={{ ...donutOptions, maintainAspectRatio: false }} />
                 </div>
             </div>
 
+            {/* Analysis Bar */}
+            <div className="card" style={{ gridColumn: 'span 4', height: '300px' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1em' }}>Carga Análisis</h3>
+                <Bar
+                    data={analysisData}
+                    options={{
+                        ...chartOptions,
+                        indexAxis: 'y' as const
+                    }}
+                />
+            </div>
+
             {/* Dev Bar */}
-            <div className="card" style={{ gridColumn: 'span 3', height: '300px' }}>
+            <div className="card" style={{ gridColumn: 'span 4', height: '300px' }}>
                 <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1em' }}>Carga Desarrollo</h3>
                 <Bar
                     data={devData}
+                    options={{
+                        ...chartOptions,
+                        indexAxis: 'y' as const
+                    }}
+                />
+            </div>
+
+            {/* CC Bar */}
+            <div className="card" style={{ gridColumn: 'span 4', height: '300px' }}>
+                <h3 style={{ margin: '0 0 15px 0', fontSize: '1.1em' }}>Carga Control Calidad</h3>
+                <Bar
+                    data={ccData}
                     options={{
                         ...chartOptions,
                         indexAxis: 'y' as const

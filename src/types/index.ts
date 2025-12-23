@@ -34,4 +34,14 @@ export interface Row {
     porcentajeAvance: number | null;
     orden: number | null;
     createdTime?: Date;
+    fechaGreq: Date | null;
+    archivoAdjunto: Attachment[];
+}
+
+export interface Attachment {
+    id: string;
+    url: string;
+    filename: string;
+    size?: number;
+    type?: string;
 }

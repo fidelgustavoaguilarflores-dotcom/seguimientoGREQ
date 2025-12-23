@@ -5,6 +5,8 @@ import { MultiSelect } from '../ui/MultiSelect';
 export interface FiltersState {
     startDate: string; // YYYY-MM-DD
     endDate: string; // YYYY-MM-DD
+    startGreq: string;
+    endGreq: string;
     observacion: string; // "Todos" or specific
     entidades: string[];
     siglas: string[];
@@ -62,6 +64,29 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters, data }) =
                     </div>
                 </div>
 
+                {/* Date Range GREQ */}
+                <div style={{ gridColumn: 'span 2' }}>
+                    <label style={{ display: 'block', fontSize: '0.85em', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                        Fecha GREQ (Desde - Hasta)
+                    </label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <input
+                            type="date"
+                            className="form-input"
+                            value={filters.startGreq || ''}
+                            onChange={e => handleChange('startGreq', e.target.value)}
+                        />
+                        <input
+                            type="date"
+                            className="form-input"
+                            value={filters.endGreq || ''}
+                            onChange={e => handleChange('endGreq', e.target.value)}
+                        />
+                    </div>
+                </div>
+
+
+
                 {/* Search */}
                 <div style={{ gridColumn: 'span 2' }}>
                     <label style={{ display: 'block', fontSize: '0.85em', color: 'var(--text-secondary)', marginBottom: '4px' }}>
@@ -110,24 +135,26 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters, data }) =
                     selected={filters.siglas}
                     onChange={val => handleChange('siglas', val)}
                 />
-                <MultiSelect
-                    label="Resp. Análisis"
-                    options={uniqueRespAnalisis}
-                    selected={filters.respAnalisis}
-                    onChange={val => handleChange('respAnalisis', val)}
-                />
-                <MultiSelect
-                    label="Resp. Desarrollo"
-                    options={uniqueRespDesarrollo}
-                    selected={filters.respDesarrollo}
-                    onChange={val => handleChange('respDesarrollo', val)}
-                />
-                <MultiSelect
-                    label="Resp. CC"
-                    options={uniqueRespCC}
-                    selected={filters.respCC}
-                    onChange={val => handleChange('respCC', val)}
-                />
+                <div style={{ gridColumn: 'span 3', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                    <MultiSelect
+                        label="Resp. Análisis"
+                        options={uniqueRespAnalisis}
+                        selected={filters.respAnalisis}
+                        onChange={val => handleChange('respAnalisis', val)}
+                    />
+                    <MultiSelect
+                        label="Resp. Desarrollo"
+                        options={uniqueRespDesarrollo}
+                        selected={filters.respDesarrollo}
+                        onChange={val => handleChange('respDesarrollo', val)}
+                    />
+                    <MultiSelect
+                        label="Resp. CC"
+                        options={uniqueRespCC}
+                        selected={filters.respCC}
+                        onChange={val => handleChange('respCC', val)}
+                    />
+                </div>
 
             </div>
         </div>

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Row } from '../../types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Paperclip } from 'lucide-react';
 
 interface RecordsTableProps {
     data: Row[];
@@ -10,6 +11,10 @@ interface RecordsTableProps {
 export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
     const [page, setPage] = useState(1);
     const pageSize = 10;
+
+    useEffect(() => {
+        setPage(1);
+    }, [data]);
 
     const totalPages = Math.ceil(data.length / pageSize);
     const paginatedData = data.slice((page - 1) * pageSize, page * pageSize);
@@ -56,19 +61,27 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
                     <thead>
                         <tr>
                             <th>GREQ</th>
+                            <th>F. GREQ</th>
                             <th>Entidad</th>
                             <th>SIGLA</th>
                             <th>Observación</th>
                             <th>Resp. Análisis</th>
                             <th>Resp. Desarrollo</th>
+                            <th>Resp. CC</th>
                             <th>F. Publicación</th>
+                            <th>Adjunto</th>
                             <th style={{ width: '150px' }}>Avance</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {paginatedData.map(row => (
-                            <tr key={row.recordId}>
+                        {paginatedData.map((row, index) => (
+                            <tr key={row.recordId || `row-${index}`}>
                                 <td style={{ fontWeight: 'bold' }}>{row.greq}</td>
+                                <td>
+                                    {row.fechaGreq
+                                        ? format(row.fechaGreq, 'dd/MM/yyyy', { locale: es })
+                                        : '-'}
+                                </td>
                                 <td>
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                         <span>{row.nombreEntidad}</span>
@@ -83,10 +96,35 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
                                 </td>
                                 <td>{row.responsableAnalisis}</td>
                                 <td>{row.responsablesDesarrollo.join(', ')}</td>
+                                <td>{row.responsableCC}</td>
                                 <td>
                                     {row.fechaPublicacion
                                         ? format(row.fechaPublicacion, 'dd/MM/yyyy', { locale: es })
                                         : '-'}
+                                </td>
+                                <td>
+                                    {row.archivoAdjunto && row.archivoAdjunto.length > 0 ? (
+                                        <a
+                                            href={row.archivoAdjunto[0].url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            title={row.archivoAdjunto[0].filename}
+                                            className="btn-icon"
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                padding: '4px 8px',
+                                                backgroundColor: 'var(--primary)',
+                                                color: 'white',
+                                                borderRadius: '6px',
+                                                textDecoration: 'none',
+                                                fontSize: '0.85em'
+                                            }}
+                                        >
+                                            <Paperclip size={14} style={{ marginRight: '4px' }} /> Ver
+                                        </a>
+                                    ) : '-'}
                                 </td>
                                 <td>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -103,7 +141,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
                         ))}
                         {paginatedData.length === 0 && (
                             <tr>
-                                <td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                                <td colSpan={11} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
                                     No hay registros
                                 </td>
                             </tr>

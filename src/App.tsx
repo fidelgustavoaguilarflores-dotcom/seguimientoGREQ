@@ -4,8 +4,9 @@ import { Filters, FiltersState } from './components/dashboard/Filters';
 import { KPICards } from './components/dashboard/KPICards';
 import { ChartsSection } from './components/dashboard/ChartsSection';
 import { RecordsTable } from './components/dashboard/RecordsTable';
-import { isAfter, isBefore, parseISO, startOfDay } from 'date-fns';
+import { isAfter, isBefore, parse, startOfDay } from 'date-fns';
 import { LayoutDashboard } from 'lucide-react';
+import { ChatWidget } from './components/chat/ChatWidget';
 
 function App() {
     const { data, loading, error } = useVuceData();
@@ -13,6 +14,8 @@ function App() {
     const [filters, setFilters] = useState<FiltersState>({
         startDate: '',
         endDate: '',
+        startGreq: '',
+        endGreq: '',
         observacion: 'Todos',
         entidades: [],
         siglas: [],
@@ -29,21 +32,26 @@ function App() {
             // 1. Date Range (Fecha Publicacion)
             if (filters.startDate) {
                 if (!row.fechaPublicacion) return false;
-                // Compare start of days
-                const start = startOfDay(parseISO(filters.startDate));
-                if (isBefore(row.fechaPublicacion, start)) return false;
+                // Parse filter as YYYY-MM-DD local
+                const start = parse(filters.startDate, 'yyyy-MM-dd', new Date());
+                if (isBefore(startOfDay(row.fechaPublicacion), start)) return false;
             }
             if (filters.endDate) {
                 if (!row.fechaPublicacion) return false;
-                // set end date to end of day? Or just compare dates. 
-                // Inputs are YYYY-MM-DD. 
-                const end = startOfDay(parseISO(filters.endDate));
-                // If row date is strictly after end date (ignoring time if we compare start of days, but row has time?)
-                // Let's assume row.fechaPublicacion keeps time.
-                // We want <= end date (inclusive).
-                // e.g. end = 2025-01-01 00:00. row = 2025-01-01 10:00.
-                // If we want inclusive, we should check if isAfter(startOfDay(row), end)
+                const end = parse(filters.endDate, 'yyyy-MM-dd', new Date());
                 if (isAfter(startOfDay(row.fechaPublicacion), end)) return false;
+            }
+
+            // 1.1 Date Range (Fecha GREQ)
+            if (filters.startGreq) {
+                if (!row.fechaGreq) return false;
+                const start = parse(filters.startGreq, 'yyyy-MM-dd', new Date());
+                if (isBefore(startOfDay(row.fechaGreq), start)) return false;
+            }
+            if (filters.endGreq) {
+                if (!row.fechaGreq) return false;
+                const end = parse(filters.endGreq, 'yyyy-MM-dd', new Date());
+                if (isAfter(startOfDay(row.fechaGreq), end)) return false;
             }
 
             // 2. Observacion
@@ -143,6 +151,7 @@ function App() {
             <RecordsTable data={filteredData} />
 
             <div style={{ height: '50px' }}></div>
+            <ChatWidget />
         </div>
     );
 }

@@ -1,4 +1,4 @@
-import { Row, Observacion } from '../types';
+import { Row, Observacion, Attachment } from '../types';
 import { parse, isValid } from 'date-fns';
 
 const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL || 'http://localhost:5678/webhook/a0c58ae1-baa3-4825-8da2-412fc7ae5dc8';
@@ -30,12 +30,20 @@ interface RawRecord {
     "Orden": string | number;
     "Cálculo": string;
     "createdTime"?: string;
+    "Fecha GREQ"?: string;
+    "Archivo Adjunto"?: Attachment[];
+    "Archivo adjunto"?: Attachment[];
 }
 
 function parseDate(dateStr: string | null): Date | null {
     if (!dateStr) return null;
 
-    // Try ISO/YYYY-MM-DD
+    // Try YYYY-MM-DD (Local Time)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return parse(dateStr, 'yyyy-MM-dd', new Date());
+    }
+
+    // Try ISO or other formats
     let parsed = new Date(dateStr);
     if (!isValid(parsed)) {
         // Try dd/MM/yyyy
@@ -56,6 +64,30 @@ function normalizeInternalType(obs: string): Observacion {
 function normalizeArray(val: string[] | string): string[] {
     if (Array.isArray(val)) return val;
     if (typeof val === 'string') return [val];
+    return [];
+}
+
+function normalizeAttachment(val: any): Attachment[] {
+    if (!val) return [];
+    // If it's a string (fast link), wrap it
+    if (typeof val === 'string') {
+        return [{
+            id: 'generated-id',
+            url: val,
+            filename: 'Ver Documento',
+            type: 'link'
+        }];
+    }
+    // If it's an array (Airtable format)
+    if (Array.isArray(val)) {
+        return val.map(item => ({
+            id: item.id || 'generated-id',
+            url: item.url || '',
+            filename: item.filename || 'Documento',
+            size: item.size,
+            type: item.type
+        }));
+    }
     return [];
 }
 
@@ -93,6 +125,8 @@ export async function fetchData(): Promise<Row[]> {
         fechaPublicacion: parseDate(r["Fecha Publicación"]),
         porcentajeAvance: r["Porcentaje de avance"] != null ? r["Porcentaje de avance"] * 100 : 0,
         orden: typeof r["Orden"] === 'number' ? r["Orden"] : Number(r["Orden"]) || 0,
-        createdTime: r["createdTime"] ? new Date(r["createdTime"]) : undefined
+        createdTime: r["createdTime"] ? new Date(r["createdTime"]) : undefined,
+        fechaGreq: parseDate(r["Fecha GREQ"] || null),
+        archivoAdjunto: normalizeAttachment(r["Archivo Adjunto"] || r["Archivo adjunto"])
     }));
 }
