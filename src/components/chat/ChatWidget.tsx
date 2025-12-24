@@ -1,3 +1,5 @@
+// Floating chat widget that posts messages to a webhook and renders responses.
+// Keeps a session id in localStorage to maintain continuity.
 import React, { useState, useEffect, useRef } from 'react';
 import './ChatWidget.css';
 import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
@@ -9,6 +11,7 @@ interface Message {
     timestamp: Date;
 }
 
+// Webhook endpoint for chat interactions.
 const WEBHOOK_URL = 'http://localhost:5678/webhook/e8cebf37-df51-42ce-baf8-e2916c17cefa';
 
 export const ChatWidget: React.FC = () => {
@@ -45,6 +48,7 @@ export const ChatWidget: React.FC = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isOpen]);
 
+    // Send user message and append the assistant reply.
     const handleSendMessage = async () => {
         if (!inputValue.trim() || isSending) return;
 
@@ -78,6 +82,7 @@ export const ChatWidget: React.FC = () => {
 
             let replyText = "Lo siento, no pude procesar la respuesta.";
 
+            // Support multiple response shapes (array or object).
             if (Array.isArray(data) && data.length > 0) {
                 replyText = data[0].output || data[0].reply || data[0].text || replyText;
             } else if (typeof data === 'object') {
@@ -105,6 +110,7 @@ export const ChatWidget: React.FC = () => {
         }
     };
 
+    // Allow Enter to send, Shift+Enter to add a new line.
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();

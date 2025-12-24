@@ -1,7 +1,13 @@
+// React hook that loads VUCE data from the API layer and exposes
+// loading/error state plus a refetch function.
 import { useState, useEffect, useCallback } from 'react';
 import { Row } from '../types';
 import { fetchData } from '../services/api';
 
+/**
+ * Fetches and stores dashboard data.
+ * Returns a stable refetch function to reload on demand.
+ */
 export function useVuceData() {
     const [data, setData] = useState<Row[]>([]);
     const [loading, setLoading] = useState(true);

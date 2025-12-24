@@ -1,7 +1,10 @@
+// Filter panel for narrowing the dashboard dataset.
+// Provides date ranges, text search, and multi-select filters.
 import React from 'react';
 import { Row } from '../../types';
 import { MultiSelect } from '../ui/MultiSelect';
 
+// Filter state shape stored in App.
 export interface FiltersState {
     startDate: string; // YYYY-MM-DD
     endDate: string; // YYYY-MM-DD
@@ -24,7 +27,7 @@ interface FiltersProps {
 
 export const Filters: React.FC<FiltersProps> = ({ filters, setFilters, data }) => {
 
-    // Extract unique options
+    // Extract unique options from data to populate selects.
     const uniqueEntidades = React.useMemo(() => Array.from(new Set(data.map(r => r.entidad).filter(Boolean))), [data]);
     const uniqueSiglas = React.useMemo(() => Array.from(new Set(data.map(r => r.sigla).filter(Boolean))), [data]);
     const uniqueRespAnalisis = React.useMemo(() => Array.from(new Set(data.map(r => r.responsableAnalisis).filter(Boolean))), [data]);
@@ -35,6 +38,7 @@ export const Filters: React.FC<FiltersProps> = ({ filters, setFilters, data }) =
     }, [data]);
     const uniqueRespCC = React.useMemo(() => Array.from(new Set(data.map(r => r.responsableCC).filter(Boolean))), [data]);
 
+    // Centralized setter to keep update logic consistent.
     const handleChange = (key: keyof FiltersState, value: any) => {
         setFilters(prev => ({ ...prev, [key]: value }));
     };

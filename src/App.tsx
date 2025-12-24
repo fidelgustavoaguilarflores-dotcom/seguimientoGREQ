@@ -1,3 +1,9 @@
+// Root dashboard view.
+// Responsibilities:
+// - Load data via the custom hook.
+// - Maintain filter state.
+// - Compute filtered rows for KPIs, charts, and table.
+// - Render the main layout and chat widget.
 import { useState, useMemo } from 'react';
 import { useVuceData } from './hooks/useVuceData';
 import { Filters, FiltersState } from './components/dashboard/Filters';
@@ -8,6 +14,9 @@ import { isAfter, isBefore, parse, startOfDay } from 'date-fns';
 import { LayoutDashboard } from 'lucide-react';
 import { ChatWidget } from './components/chat/ChatWidget';
 
+/**
+ * App composes the dashboard UI and orchestrates filtering.
+ */
 function App() {
     const { data, loading, error } = useVuceData();
 
@@ -25,6 +34,7 @@ function App() {
         search: ''
     });
 
+    // Apply all UI filters to the dataset.
     const filteredData = useMemo(() => {
         if (!data) return [];
 
@@ -68,8 +78,7 @@ function App() {
             if (filters.respCC.length > 0 && !filters.respCC.includes(row.responsableCC)) return false;
 
             if (filters.respDesarrollo.length > 0) {
-                // Multi-select logic: if row has ANY of selected devs? Or ALL? Usually ANY.
-                // Row devs is array.
+                // Multi-select logic: match if the row has ANY of the selected developers.
                 const hasDev = row.responsablesDesarrollo.some(d => filters.respDesarrollo.includes(d));
                 if (!hasDev) return false;
             }

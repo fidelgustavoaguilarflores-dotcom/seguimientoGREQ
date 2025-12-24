@@ -1,3 +1,5 @@
+// Paginated table for detailed records.
+// Shows key fields and a quick attachment link.
 import React, { useState, useEffect } from 'react';
 import { Row } from '../../types';
 import { format } from 'date-fns';
@@ -12,6 +14,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
     const [page, setPage] = useState(1);
     const pageSize = 10;
 
+    // Reset to first page whenever the filtered dataset changes.
     useEffect(() => {
         setPage(1);
     }, [data]);
@@ -19,6 +22,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
     const totalPages = Math.ceil(data.length / pageSize);
     const paginatedData = data.slice((page - 1) * pageSize, page * pageSize);
 
+    // Map observation states to badge styles.
     const getBadgeClass = (obs: string) => {
         switch (obs) {
             case 'PENDIENTE': return 'badge badge-danger';

@@ -1,8 +1,12 @@
+// API layer for fetching and normalizing raw records coming from the webhook.
+// Converts string-based fields into typed values used by UI components.
 import { Row, Observacion, Attachment } from '../types';
 import { parse, isValid } from 'date-fns';
 
+// Webhook URL can be configured via VITE_WEBHOOK_URL, with a local fallback.
 const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL || 'http://localhost:5678/webhook/a0c58ae1-baa3-4825-8da2-412fc7ae5dc8';
 
+// Raw payload structure as received from the webhook (Airtable-like fields).
 interface RawRecord {
     "GREQ": number;
     "Entidad": string;
@@ -31,10 +35,10 @@ interface RawRecord {
     "Cálculo": string;
     "createdTime"?: string;
     "Fecha GREQ"?: string;
-    "Archivo Adjunto"?: Attachment[];
     "Archivo adjunto"?: Attachment[];
 }
 
+// Parses various date formats into a Date object or null.
 function parseDate(dateStr: string | null): Date | null {
     if (!dateStr) return null;
 
@@ -53,6 +57,7 @@ function parseDate(dateStr: string | null): Date | null {
     return isValid(parsed) ? parsed : null;
 }
 
+// Restricts raw observation values to a known set of types.
 function normalizeInternalType(obs: string): Observacion {
     const valid: Observacion[] = [
         "OBSERVACION", "ORIGINAL", "AJUSTE", "ACTUALIZACIÓN",
@@ -61,12 +66,14 @@ function normalizeInternalType(obs: string): Observacion {
     return valid.includes(obs as Observacion) ? (obs as Observacion) : "OBSERVACION";
 }
 
+// Coerces a string or string[] into a string[] for multi-select fields.
 function normalizeArray(val: string[] | string): string[] {
     if (Array.isArray(val)) return val;
     if (typeof val === 'string') return [val];
     return [];
 }
 
+// Normalizes attachment data into a consistent array shape.
 function normalizeAttachment(val: any): Attachment[] {
     if (!val) return [];
     // If it's a string (fast link), wrap it
@@ -91,6 +98,9 @@ function normalizeAttachment(val: any): Attachment[] {
     return [];
 }
 
+/**
+ * Fetches raw records from the webhook and maps them into typed Row objects.
+ */
 export async function fetchData(): Promise<Row[]> {
     const response = await fetch(WEBHOOK_URL);
     if (!response.ok) {
@@ -127,6 +137,6 @@ export async function fetchData(): Promise<Row[]> {
         orden: typeof r["Orden"] === 'number' ? r["Orden"] : Number(r["Orden"]) || 0,
         createdTime: r["createdTime"] ? new Date(r["createdTime"]) : undefined,
         fechaGreq: parseDate(r["Fecha GREQ"] || null),
-        archivoAdjunto: normalizeAttachment(r["Archivo Adjunto"] || r["Archivo adjunto"])
+        archivoAdjunto: normalizeAttachment(r["Archivo adjunto"])
     }));
 }

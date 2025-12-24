@@ -1,3 +1,5 @@
+// Charts section containing time series and distribution charts.
+// Aggregates data on the fly based on filters and granularity.
 import React, { useMemo, useState } from 'react';
 import { Row } from '../../types';
 import {
@@ -24,6 +26,7 @@ import {
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+// Register chart.js components once for the module.
 ChartJS.register(
     CategoryScale,
     LinearScale,
@@ -48,6 +51,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({ data }) => {
     const [granularity, setGranularity] = useState<Granularity>('month');
     const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
+    // Shared options for line/bar charts.
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
@@ -64,6 +68,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({ data }) => {
         }
     };
 
+    // Options for the donut chart legend placement.
     const donutOptions = {
         plugins: {
             legend: { position: 'right' as const, labels: { color: '#94a3b8' } }
@@ -83,7 +88,7 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({ data }) => {
                 if (r.fechaGreq < dateRange.start || r.fechaGreq > dateRange.end) return;
             }
 
-            // Fallback to fechaGreq if fechaPublicacion is missing to ensure we show all states (like AJUSTE)
+            // Fallback to fechaGreq if fechaPublicacion is missing to ensure we show all states.
             const rawDate = r.fechaGreq || r.fechaPublicacion;
             if (!rawDate) return;
 

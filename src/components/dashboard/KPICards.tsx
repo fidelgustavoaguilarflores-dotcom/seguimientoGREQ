@@ -1,3 +1,5 @@
+// KPI cards that summarize the dataset.
+// Computes aggregates such as top entities and average progress.
 import React, { useMemo } from 'react';
 import { Row } from '../../types';
 import { FileText, ClipboardList, Percent, Building, User, Code, ShieldCheck } from 'lucide-react';

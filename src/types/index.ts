@@ -1,3 +1,4 @@
+// Normalized observation values used across filters, charts, and table badges.
 export type Observacion =
     | "OBSERVACION"
     | "ORIGINAL"
@@ -7,6 +8,7 @@ export type Observacion =
     | "COMPLEMENTARIO"
     | "PENDIENTE";
 
+// Primary row structure consumed by the UI.
 export interface Row {
     recordId: string;
     greq: number;
@@ -38,6 +40,7 @@ export interface Row {
     archivoAdjunto: Attachment[];
 }
 
+// File metadata for attachments linked to a record.
 export interface Attachment {
     id: string;
     url: string;

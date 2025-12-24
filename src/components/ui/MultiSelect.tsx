@@ -1,3 +1,5 @@
+// Reusable multi-select dropdown with checkbox list.
+// Manages open/close state and closes on outside click.
 import React, { useState, useRef, useEffect } from 'react';
 
 interface MultiSelectProps {
@@ -22,6 +24,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({ label, options, select
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Toggle an option in the selected list.
     const toggleOption = (option: string) => {
         if (selected.includes(option)) {
             onChange(selected.filter(s => s !== option));
