@@ -85,7 +85,9 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({ data }) => {
             // Filter by Fecha GREQ Range if set
             if (dateRange.start && dateRange.end) {
                 if (!r.fechaGreq) return;
-                if (r.fechaGreq < dateRange.start || r.fechaGreq > dateRange.end) return;
+                const startDate = parseISO(dateRange.start);
+                const endDate = parseISO(dateRange.end);
+                if (r.fechaGreq < startDate || r.fechaGreq > endDate) return;
             }
 
             // Fallback to fechaGreq if fechaPublicacion is missing to ensure we show all states.

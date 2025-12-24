@@ -2,7 +2,7 @@
 // Keeps a session id in localStorage to maintain continuity.
 import React, { useState, useEffect, useRef } from 'react';
 import './ChatWidget.css';
-import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
+import { MessageCircle, X, Send, Bot } from 'lucide-react';
 
 interface Message {
     id: string;

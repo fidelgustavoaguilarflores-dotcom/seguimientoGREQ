@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  vuce-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_WEBHOOK_URL: ${VITE_WEBHOOK_URL}
+    image: vuce-dashboard:prod
+    ports:
+      - "8080:80"
+    restart: unless-stopped

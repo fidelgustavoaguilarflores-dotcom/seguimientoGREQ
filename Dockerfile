@@ -9,6 +9,10 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
+# Build-time env for Vite (import.meta.env)
+ARG VITE_WEBHOOK_URL
+ENV VITE_WEBHOOK_URL=$VITE_WEBHOOK_URL
+
 # Copy the rest of the application code
 COPY . .
 
