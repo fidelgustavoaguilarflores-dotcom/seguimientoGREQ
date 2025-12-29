@@ -11,6 +11,7 @@ const WEBHOOK_URL =
 // Raw payload structure as received from the webhook (Airtable-like fields).
 interface RawRecord {
   GREQ: number;
+  Estado: string;
   Entidad: string;
   "Nombre Entidad": string;
   SIGLA: string;
@@ -123,6 +124,7 @@ export async function fetchData(): Promise<Row[]> {
   return data.map((r) => ({
     recordId: r["Cálculo"],
     greq: r["GREQ"],
+    estado: r["Estado"] || "",
     entidad: r["Entidad"] || "",
     nombreEntidad: r["Nombre Entidad"] || "",
     sigla: r["SIGLA"] || "",
