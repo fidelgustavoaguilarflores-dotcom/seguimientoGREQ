@@ -12,6 +12,7 @@ interface RecordsTableProps {
 
 export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
   const [page, setPage] = useState(1);
+  const [selectedRow, setSelectedRow] = useState<Row | null>(null);
   const pageSize = 10;
 
   // Reset to first page whenever the filtered dataset changes.
@@ -36,6 +37,44 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
       default:
         return "badge";
     }
+  };
+
+  const getEstadoClass = (estado: string | null | undefined) => {
+    const value = (estado ?? "").toString().toLowerCase();
+    if (value.includes("aceptado")) {
+      return "badge badge-aceptado";
+    }
+    if (value.includes("asignado")) {
+      return "badge badge-asignado";
+    }
+    if (value.includes("concluido")) {
+      return "badge badge-concluido";
+    }
+    if (value.includes("control de calidad finalizado")) {
+      return "badge badge-control-de-calidad-finalizado";
+    }
+    if (value.includes("control de calidad solicitado")) {
+      return "badge badge-control-de-calidad-solicitado";
+    }
+    if (value.includes("control funcional")) {
+      return "badge badge-control-funcional";
+    }
+    if (value.includes("control funcional finalizado")) {
+      return "badge badge-control-funcional-finalizado";
+    }
+    if (value.includes("desarrollo finalizado")) {
+      return "badge badge-desarrollo-finalizado";
+    }
+    if (value.includes("publicado")) {
+      return "badge badge-publicado";
+    }
+    if (value.includes("puesta produccion solicitado")) {
+      return "badge badge-puesta-produccion-solicitado";
+    }
+    if (value.includes("solicitado")) {
+      return "badge badge-solicitado";
+    }
+    return "badge";
   };
 
   return (
@@ -79,8 +118,8 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
           <thead>
             <tr>
               <th>GREQ</th>
-              <th>F. GREQ</th>
               <th>Estado</th>
+              <th>F. GREQ</th>
               <th>Entidad</th>
               <th>SIGLA</th>
               <th>Observación</th>
@@ -95,8 +134,21 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
           <tbody>
             {paginatedData.map((row, index) => (
               <tr key={row.recordId || `row-${index}`}>
-                <td style={{ fontWeight: "bold" }}>{row.greq}</td>
-                <td>{row.estado}</td>
+                <td style={{ fontWeight: "bold" }}>
+                  <button
+                    type="button"
+                    className="link-button"
+                    onClick={() => setSelectedRow(row)}
+                    title="Ver detalle del requerimiento"
+                  >
+                    {row.greq}
+                  </button>
+                </td>
+                <td>
+                  <span className={getEstadoClass(row.estado)}>
+                    {row.estado || "-"}
+                  </span>
+                </td>
                 <td>
                   {row.fechaGreq
                     ? format(row.fechaGreq, "dd/MM/yyyy", { locale: es })
@@ -176,7 +228,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
             {paginatedData.length === 0 && (
               <tr>
                 <td
-                  colSpan={11}
+                  colSpan={12}
                   style={{
                     textAlign: "center",
                     padding: "40px",
@@ -190,6 +242,249 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
           </tbody>
         </table>
       </div>
+      {selectedRow && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setSelectedRow(null)}
+        >
+          <div
+            className="modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Detalle del GREQ ${selectedRow.greq}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modal-header">
+              <div>
+                <div className="modal-title">
+                  Detalle del GREQ {selectedRow.greq}
+                </div>
+                <div className="modal-subtitle">
+                  {selectedRow.nombreEntidad || selectedRow.entidad}
+                </div>
+              </div>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setSelectedRow(null)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="modal-section">
+                <div className="modal-section-title">Resumen</div>
+                <div className="detail-grid">
+                  <div>
+                    <div className="detail-label">Estado</div>
+                    <div className="detail-value">
+                      {selectedRow.estado || "-"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="detail-label">Observación</div>
+                    <div className="detail-value">
+                      {selectedRow.observacion || "-"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="detail-label">Entidad</div>
+                    <div className="detail-value">
+                      {selectedRow.entidad || "-"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="detail-label">SIGLA</div>
+                    <div className="detail-value">
+                      {selectedRow.sigla || "-"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="detail-label">APCO</div>
+                    <div className="detail-value">
+                      {selectedRow.apco || "-"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="detail-label">Avance</div>
+                    <div className="detail-value">
+                      {selectedRow.porcentajeAvance || 0}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-section">
+                <div className="modal-section-title">Fechas</div>
+                <div className="detail-grid">
+                  <div>
+                    <div className="detail-label">Fecha GREQ</div>
+                    <div className="detail-value">
+                      {selectedRow.fechaGreq
+                        ? format(selectedRow.fechaGreq, "dd/MM/yyyy", {
+                            locale: es,
+                          })
+                        : "-"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="detail-label">Fecha Publicación</div>
+                    <div className="detail-value">
+                      {selectedRow.fechaPublicacion
+                        ? format(selectedRow.fechaPublicacion, "dd/MM/yyyy", {
+                            locale: es,
+                          })
+                        : "-"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="detail-label">Inicio</div>
+                    <div className="detail-value">
+                      {selectedRow.fechaInicio
+                        ? format(selectedRow.fechaInicio, "dd/MM/yyyy", {
+                            locale: es,
+                          })
+                        : "-"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="detail-label">Final</div>
+                    <div className="detail-value">
+                      {selectedRow.fechaFinal
+                        ? format(selectedRow.fechaFinal, "dd/MM/yyyy", {
+                            locale: es,
+                          })
+                        : "-"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-section">
+                <div className="modal-section-title">Responsables</div>
+                <div className="detail-grid">
+                  <div>
+                    <div className="detail-label">Análisis</div>
+                    <div className="detail-value">
+                      {selectedRow.responsableAnalisis || "-"}
+                    </div>
+                    <div className="detail-meta">
+                      Estado: {selectedRow.estadoAnalisis || "-"}
+                    </div>
+                    <div className="detail-meta">
+                      <span>
+                        Ini:{" "}
+                        {selectedRow.fechaIniAnalisis
+                          ? format(selectedRow.fechaIniAnalisis, "dd/MM/yyyy", {
+                              locale: es,
+                            })
+                          : "-"}
+                      </span>
+                      <span>
+                        Fin:{" "}
+                        {selectedRow.fechaFinAnalisis
+                          ? format(selectedRow.fechaFinAnalisis, "dd/MM/yyyy", {
+                              locale: es,
+                            })
+                          : "-"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="detail-label">Desarrollo</div>
+                    <div className="detail-value">
+                      {selectedRow.responsablesDesarrollo.length > 0
+                        ? selectedRow.responsablesDesarrollo.join(", ")
+                        : "-"}
+                    </div>
+                    <div className="detail-meta">
+                      Estado: {selectedRow.estadoDesarrollo || "-"}
+                    </div>
+                    <div className="detail-meta">
+                      <span>
+                        Ini:{" "}
+                        {selectedRow.fechaIniDesarrollo
+                          ? format(
+                              selectedRow.fechaIniDesarrollo,
+                              "dd/MM/yyyy",
+                              {
+                                locale: es,
+                              }
+                            )
+                          : "-"}
+                      </span>
+                      <span>
+                        Fin:{" "}
+                        {selectedRow.fechaFinDesarrollo
+                          ? format(
+                              selectedRow.fechaFinDesarrollo,
+                              "dd/MM/yyyy",
+                              {
+                                locale: es,
+                              }
+                            )
+                          : "-"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="detail-label">Control de Calidad</div>
+                    <div className="detail-value">
+                      {selectedRow.responsableCC || "-"}
+                    </div>
+                    <div className="detail-meta">
+                      Estado: {selectedRow.estadoCC || "-"}
+                    </div>
+                    <div className="detail-meta">
+                      <span>
+                        Ini:{" "}
+                        {selectedRow.fechaIniCC
+                          ? format(selectedRow.fechaIniCC, "dd/MM/yyyy", {
+                              locale: es,
+                            })
+                          : "-"}
+                      </span>
+                      <span>
+                        Fin:{" "}
+                        {selectedRow.fechaFinCC
+                          ? format(selectedRow.fechaFinCC, "dd/MM/yyyy", {
+                              locale: es,
+                            })
+                          : "-"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="modal-section">
+                <div className="modal-section-title">Descripción</div>
+                <div className="detail-long">
+                  {selectedRow.descripcionGreq || "-"}
+                </div>
+              </div>
+
+              <div className="modal-section">
+                <div className="modal-section-title">Adjunto</div>
+                {selectedRow.archivoAdjunto &&
+                selectedRow.archivoAdjunto.length > 0 ? (
+                  <a
+                    href={selectedRow.archivoAdjunto[0].url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="detail-link"
+                  >
+                    {selectedRow.archivoAdjunto[0].filename || "Ver documento"}
+                  </a>
+                ) : (
+                  <div className="detail-value">-</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

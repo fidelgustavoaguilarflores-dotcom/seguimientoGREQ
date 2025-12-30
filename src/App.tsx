@@ -31,6 +31,7 @@ function App() {
         respAnalisis: [],
         respDesarrollo: [],
         respCC: [],
+        estado: 'Todos',
         search: ''
     });
 
@@ -38,7 +39,7 @@ function App() {
     const filteredData = useMemo(() => {
         if (!data) return [];
 
-        return data.filter(row => {
+        const result = data.filter(row => {
             // 1. Date Range (Fecha Publicacion)
             if (filters.startDate) {
                 if (!row.fechaPublicacion) return false;
@@ -66,6 +67,9 @@ function App() {
 
             // 2. Observacion
             if (filters.observacion !== 'Todos' && row.observacion !== filters.observacion) return false;
+
+            // 2.1 Estado
+            if (filters.estado !== 'Todos' && row.estado !== filters.estado) return false;
 
             // 3. Entidades
             if (filters.entidades.length > 0 && !filters.entidades.includes(row.entidad)) return false;
@@ -95,6 +99,12 @@ function App() {
             }
 
             return true;
+        });
+
+        return result.sort((a, b) => {
+            const aTime = a.fechaGreq ? a.fechaGreq.getTime() : 0;
+            const bTime = b.fechaGreq ? b.fechaGreq.getTime() : 0;
+            return bTime - aTime;
         });
     }, [data, filters]);
 

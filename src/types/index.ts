@@ -3,7 +3,7 @@ export type Observacion =
   | "OBSERVACION"
   | "ORIGINAL"
   | "AJUSTE"
-  | "ACTUALIZACIÓN"
+  | "ACTUALIZACION"
   | "SUMA-VUCE"
   | "COMPLEMENTARIO"
   | "PENDIENTE";
