@@ -139,6 +139,16 @@ body {
   color: var(--primary);
 }
 
+.badge-primary2 {
+  background: rgba(0, 100, 0, 0.2);
+  color: var(--primary);
+}
+
+.badge-primary3 {
+  background: rgba(136, 219, 255, 0.2);
+  color: var(--primary);
+}
+
 .badge-publicado {
   background: rgb(0, 100, 0);
   color: #fff;
@@ -185,7 +195,7 @@ body {
 }
 
 .badge-control-de-calidad-solicitado {
-  background: rgb(255, 214, 107);
+  background: rgba(255, 214, 107, 1);
   color: #000;
 }
 

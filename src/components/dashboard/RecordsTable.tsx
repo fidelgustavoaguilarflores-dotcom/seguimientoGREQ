@@ -34,6 +34,12 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
         return "badge badge-warning";
       case "ORIGINAL":
         return "badge badge-info";
+      case "COMPLEMENTARIO":
+        return "badge badge-primary";
+      case "ACTUALIZACION":
+        return "badge badge-primary2";
+      case "OBSERVACION":
+        return "badge badge-primary3";
       default:
         return "badge";
     }
@@ -118,9 +124,9 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
           <thead>
             <tr>
               <th>GREQ</th>
-              <th>Estado</th>
+              <th style={{ width: "140px" }}>Estado</th>
               <th>F. GREQ</th>
-              <th>Entidad</th>
+              <th style={{ width: "220px" }}>Entidad</th>
               <th>SIGLA</th>
               <th>Observación</th>
               <th>Resp. Análisis</th>
@@ -128,7 +134,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
               <th>Resp. CC</th>
               <th>F. Publicación</th>
               <th>Adjunto</th>
-              <th style={{ width: "150px" }}>Avance</th>
+              <th style={{ width: "110px" }}>Avance</th>
             </tr>
           </thead>
           <tbody>
