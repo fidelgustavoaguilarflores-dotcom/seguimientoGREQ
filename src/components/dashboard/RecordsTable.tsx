@@ -83,6 +83,14 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
     return "badge";
   };
 
+  const getProgressColor = (value: number) => {
+    if (value >= 100) return "var(--primary)";
+    if (value >= 80) return "var(--success)";
+    if (value >= 60) return "var(--warning)";
+    if (value >= 30) return "#fbbf24";
+    return "var(--danger)";
+  };
+
   return (
     <div className="card" style={{ marginTop: "20px", overflow: "hidden" }}>
       <div
@@ -101,7 +109,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}
           >
-            &lt; Prev
+            &lt; Ant
           </button>
           <span
             style={{ display: "flex", alignItems: "center", padding: "0 10px" }}
@@ -114,7 +122,7 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
           >
-            Next &gt;
+            Sig &gt;
           </button>
         </div>
       </div>
@@ -221,7 +229,12 @@ export const RecordsTable: React.FC<RecordsTableProps> = ({ data }) => {
                     <div className="progress-bar" style={{ flexGrow: 1 }}>
                       <div
                         className="progress-fill"
-                        style={{ width: `${row.porcentajeAvance || 0}%` }}
+                        style={{
+                          width: `${row.porcentajeAvance || 0}%`,
+                          background: getProgressColor(
+                            row.porcentajeAvance || 0
+                          ),
+                        }}
                       ></div>
                     </div>
                     <span style={{ fontSize: "0.8em" }}>
