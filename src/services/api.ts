@@ -48,7 +48,7 @@ interface RawRecord {
 }
 
 // Parses various date formats into a Date object or null.
-function parseDate(dateStr: string | null | undefined): Date | null {
+export function parseDate(dateStr: string | null | undefined): Date | null {
   if (!dateStr) return null;
 
   // Try YYYY-MM-DD (Local Time)
@@ -67,7 +67,7 @@ function parseDate(dateStr: string | null | undefined): Date | null {
 }
 
 // Restricts raw observation values to a known set of types.
-function normalizeInternalType(obs: string): Observacion {
+export function normalizeInternalType(obs: string): Observacion {
   const raw = String(obs ?? "").toUpperCase();
   const normalized = raw.normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -83,7 +83,7 @@ function normalizeInternalType(obs: string): Observacion {
 }
 
 // Coerces a string or string[] into a string[] for multi-select fields.
-function normalizeArray(val: string[] | string | any[] | undefined): string[] {
+export function normalizeArray(val: string[] | string | any[] | undefined): string[] {
   if (Array.isArray(val)) {
     return val.map((item) => normalizeText(item)).filter(Boolean);
   }
@@ -92,7 +92,7 @@ function normalizeArray(val: string[] | string | any[] | undefined): string[] {
 }
 
 // Normalizes attachment data into a consistent array shape.
-function normalizeAttachment(val: any): Attachment[] {
+export function normalizeAttachment(val: any): Attachment[] {
   if (!val) return [];
   // If it's a string (fast link), wrap it
   if (typeof val === "string") {
@@ -118,7 +118,7 @@ function normalizeAttachment(val: any): Attachment[] {
   return [];
 }
 
-function normalizeText(val: any): string {
+export function normalizeText(val: any): string {
   if (val == null) return "";
   if (typeof val === "string" || typeof val === "number") {
     return String(val);
@@ -131,7 +131,7 @@ function normalizeText(val: any): string {
   return "";
 }
 
-function normalizePercentage(val: any): number {
+export function normalizePercentage(val: any): number {
   if (val == null || val == "") return 0;
   const num = typeof val == "number" ? val : Number(val);
   if (Number.isNaN(num)) return 0;
@@ -161,9 +161,9 @@ export async function fetchData(): Promise<Row[]> {
     observacion: normalizeInternalType(
       normalizeText(
         r["Observación"] ||
-          r["Observacion"] ||
-          r["Observaci¢n"] ||
-          r["Observaci½n"]
+        r["Observacion"] ||
+        r["Observaci¢n"] ||
+        r["Observaci½n"]
       )
     ),
     descripcionGreq: normalizeText(
